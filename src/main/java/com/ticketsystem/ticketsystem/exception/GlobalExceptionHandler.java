@@ -13,38 +13,37 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentialsError(BadCredentialsException e){
    ApiError error=new ApiError(HttpStatus.BAD_REQUEST,"Bad Credentials" , e.getMessage());
-   return ResponseEntity.ok(error);
+   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
      
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleResourceNotFoundException(ResourceNotFoundException e){
-   ApiError error=new ApiError(HttpStatus.NOT_FOUND,"Invalid Resouce" , e.getMessage());
-   return ResponseEntity.ok(error);
+   ApiError error=new ApiError(HttpStatus.NOT_FOUND,"Invalid Resource" , e.getMessage());
+   return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
   
     
     @ExceptionHandler(InvalidRoleException.class)
     public ResponseEntity<ApiError> handleInvalidRoleException(InvalidRoleException e){
     ApiError error=new ApiError(HttpStatus.FORBIDDEN,"Invalid Role" , e.getMessage());
-    return ResponseEntity.ok(error);
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     @ExceptionHandler(InvalidResourceException.class)
-    public ResponseEntity<ApiError> handleInvalidResouceError(InvalidResourceException e){
-   ApiError error=new ApiError(HttpStatus.NOT_FOUND,"Invalid Resouce" , e.getMessage());
-   return ResponseEntity.ok(error);
+    public ResponseEntity<ApiError> handleInvalidResourceError(InvalidResourceException e){
+   ApiError error=new ApiError(HttpStatus.NOT_FOUND,"Invalid Resource" , e.getMessage());
+   return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(TicketNotFoundException.class)
     public ResponseEntity<ApiError> handleInvalidTicketError(TicketNotFoundException e){
    ApiError error=new ApiError(HttpStatus.NOT_FOUND,"No such Ticket" , e.getMessage());
-   return ResponseEntity.ok(error);
+   return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGlobalException(Exception e){
            ApiError error=new ApiError(HttpStatus.INTERNAL_SERVER_ERROR,"Internal Server Error!" , e.getMessage());
-           return ResponseEntity.ok(error);
-
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
     
 

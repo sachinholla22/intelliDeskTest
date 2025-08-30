@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import com.ticketsystem.ticketsystem.dto.SingleTicketResponse;
 import com.ticketsystem.ticketsystem.dto.TicketResponseDTO;
@@ -39,13 +41,17 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @CacheEvict(value = {"tickets", "ticket"}, allEntries = true)
     public String createTicketService(Ticket ticket, List<MultipartFile> photos, String userId) {
         Users user = userRepo.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new UsernameNotFoundException("No particular User"));
         
-        Organization org=new Organization();
-        OrgPlans plan=org.getOrgPlan();
-        int maxPhotos=plan==OrgPlans.BASE ? 2:7;
+        Organization org = user.getOrganization();
+        if (org == null) {
+            throw new RuntimeException("User must belong to an organization");
+        }
+        OrgPlans plan = org.getOrgPlan();
+        int maxPhotos = plan == OrgPlans.BASE ? 2 : 7;
 
         if(photos.size()>maxPhotos){
          throw new RuntimeException("You can upload max of "+ maxPhotos+" per ticket as per your plan");
@@ -116,7 +122,7 @@ public class TicketServiceImpl implements TicketService {
 
             // Directly set the list of photo paths
             resp.setPhotoPath(ticket.getPhotoPath() != null ? ticket.getPhotoPath() : Collections.emptyList());
-            resp.setAssignedByName(ticket.getAssignedBy().getName());
+            resp.setAssignedByName(ticket.getAssignedBy() != null ? ticket.getAssignedBy().getName() : null);
             responseList.add(resp);
         }
 
@@ -124,6 +130,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @CacheEvict(value = {"tickets", "ticket"}, allEntries = true)
     public String assignTicketService(Long ticketId, Long assignedById, Long assignedToId) {
         // Get existing ticket
         Ticket ticket = ticketRepo.findById(ticketId)
@@ -145,6 +152,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Cacheable(value = "tickets", key = "#orgId", unless = "#result.isEmpty()")
     public Optional<List<TicketResponseDTO>> getAllTickets(String priority, String status,Long orgId) {
         List<Ticket> tickets = ticketRepo.findAllByFilters(priority, status,orgId);
 
@@ -153,18 +161,25 @@ public class TicketServiceImpl implements TicketService {
         }
 
         List<TicketResponseDTO> dtoList = tickets.stream()
-                .map(ticket -> new TicketResponseDTO(
-                        ticket.getOrganization().getOrgName(),
-                        ticket.getTitle(),
-                        ticket.getDescription(),
-                        ticket.getStatus(),
-                        ticket.getPriority(),
-                        ticket.getClient().getName(),
-                        ticket.getAssignedTo().getName(),
-                        ticket.getCreatedAt(),
-                        ticket.getDueDate(),
-                        ticket.getPhotoPath(),
-                        ticket.getAssignedBy().getName()))
+                .map(ticket -> {
+                    String assignedToName = ticket.getAssignedTo() != null ? ticket.getAssignedTo().getName() : null;
+                    String assignedByName = ticket.getAssignedBy() != null ? ticket.getAssignedBy().getName() : null;
+                    String orgName = ticket.getOrganization() != null ? ticket.getOrganization().getOrgName() : null;
+                    String clientName = ticket.getClient() != null ? ticket.getClient().getName() : null;
+                    
+                    return new TicketResponseDTO(
+                            orgName,
+                            ticket.getTitle(),
+                            ticket.getDescription(),
+                            ticket.getStatus(),
+                            ticket.getPriority(),
+                            clientName,
+                            assignedToName,
+                            ticket.getCreatedAt(),
+                            ticket.getDueDate(),
+                            ticket.getPhotoPath(),
+                            assignedByName);
+                })
                 .collect(Collectors.toList());
 
         return Optional.of(dtoList);
@@ -177,23 +192,31 @@ public class TicketServiceImpl implements TicketService {
         if ("desc".equalsIgnoreCase(direction)) {
             Collections.reverse(response);
         }
-        return response.stream().map(ticket -> new TicketResponseDTO(
-                ticket.getOrganization().getOrgName(),
-                ticket.getTitle(),
-                ticket.getDescription(),
-                ticket.getStatus(),
-                ticket.getPriority(),
-                ticket.getClient().getName(),
-                ticket.getAssignedTo().getName(),
-                ticket.getCreatedAt(),
-                ticket.getDueDate(),
-                ticket.getPhotoPath(),
-                ticket.getAssignedBy().getName())).toList();
+        return response.stream().map(ticket -> {
+            String assignedToName = ticket.getAssignedTo() != null ? ticket.getAssignedTo().getName() : null;
+            String assignedByName = ticket.getAssignedBy() != null ? ticket.getAssignedBy().getName() : null;
+            String orgName = ticket.getOrganization() != null ? ticket.getOrganization().getOrgName() : null;
+            String clientName = ticket.getClient() != null ? ticket.getClient().getName() : null;
+            
+            return new TicketResponseDTO(
+                    orgName,
+                    ticket.getTitle(),
+                    ticket.getDescription(),
+                    ticket.getStatus(),
+                    ticket.getPriority(),
+                    clientName,
+                    assignedToName,
+                    ticket.getCreatedAt(),
+                    ticket.getDueDate(),
+                    ticket.getPhotoPath(),
+                    assignedByName);
+        }).toList();
 
     }
 
 
     @Override
+    @Cacheable(value = "ticket", key = "#ticketId")
     public Optional<SingleTicketResponse> getTicketByIds(Long ticketId){
         Ticket getTicket=ticketRepo.findById(ticketId).orElseThrow(()->new ResourceNotFoundException("No such Tickets"));
 
@@ -227,18 +250,25 @@ public class TicketServiceImpl implements TicketService {
     public List<TicketResponseDTO> getOverDuesController(Long orgId){
         List<Ticket> tickets=ticketRepo.findByDues(orgId);
 
-    List<TicketResponseDTO>response= tickets.stream().map(ticket->new TicketResponseDTO(
-        ticket.getOrganization().getOrgName(),
-        ticket.getTitle(),
-        ticket.getDescription(),
-        ticket.getStatus(),
-        ticket.getPriority(),
-        ticket.getClient().getName(),
-        ticket.getAssignedTo().getName(),
-        ticket.getCreatedAt(),
-        ticket.getDueDate(),
-        ticket.getPhotoPath(),
-        ticket.getAssignedBy().getName())).toList();
+    List<TicketResponseDTO>response= tickets.stream().map(ticket->{
+        String assignedToName = ticket.getAssignedTo() != null ? ticket.getAssignedTo().getName() : null;
+        String assignedByName = ticket.getAssignedBy() != null ? ticket.getAssignedBy().getName() : null;
+        String orgName = ticket.getOrganization() != null ? ticket.getOrganization().getOrgName() : null;
+        String clientName = ticket.getClient() != null ? ticket.getClient().getName() : null;
+        
+        return new TicketResponseDTO(
+            orgName,
+            ticket.getTitle(),
+            ticket.getDescription(),
+            ticket.getStatus(),
+            ticket.getPriority(),
+            clientName,
+            assignedToName,
+            ticket.getCreatedAt(),
+            ticket.getDueDate(),
+            ticket.getPhotoPath(),
+            assignedByName);
+    }).toList();
 
         return response;
            

@@ -41,7 +41,7 @@ public class ManageTicketsController {
     public ResponseEntity<ApiWrapper<?>> getAllTickets(@RequestHeader("Authorization") String authHeader,@RequestParam(required = false) String priority,
             @RequestParam(required = false) String status) {
         
-        String jwt=authHeader.replace("Bearer","");
+        String jwt=authHeader.replace("Bearer ","");
         Long orgId=jwtUtils.extractOrganizationId(jwt);      
         Optional<List<TicketResponseDTO>> list = ticketService.getAllTickets(priority, status,orgId);
         if (list.isEmpty()) {
@@ -55,7 +55,7 @@ public class ManageTicketsController {
     public ResponseEntity<ApiWrapper<?>> getTicketsBySortByPriority(@RequestHeader("Authorization") String authHeader,
             @RequestParam(name = "direction", defaultValue = "asc") String direction) {
 
-        String jwt=authHeader.replace("Bearer","");
+        String jwt=authHeader.replace("Bearer ","");
         Long orgId=jwtUtils.extractOrganizationId(jwt);   
         List<TicketResponseDTO> response = ticketService.sortTicketByPriority(direction,orgId);
         return ResponseEntity.ok(ApiWrapper.success(response, HttpStatus.OK));

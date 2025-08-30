@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 
 import com.ticketsystem.ticketsystem.entity.Users;
 import com.ticketsystem.ticketsystem.enums.Role;
@@ -19,6 +20,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Cacheable(value = "users", key = "'role:' + #role + ':' + #orgId", unless = "#result.isEmpty()")
     public Optional<List<Users>> getDevelopersService(String role,Long orgId){
         Optional<List<Users>> getUsers=userRepo.findByRole(role,orgId);
         return getUsers;

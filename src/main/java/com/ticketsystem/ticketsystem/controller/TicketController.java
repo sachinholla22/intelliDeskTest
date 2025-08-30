@@ -69,7 +69,7 @@ public class TicketController {
     @GetMapping("/getTickets")
     public ResponseEntity<ApiWrapper<?>> getNullOpenTicketsController(@RequestHeader("Authorization")String authHeader,@RequestParam("status") String status){
 
-        String jwt=authHeader.replace("Bearer","");
+        String jwt=authHeader.replace("Bearer ","");
         Long orgId=jwtUtils.extractOrganizationId(jwt);  
         Optional<List<TicketResponseDTO>> ticket=ticketService.getNullOpenTicketService(status,orgId);
         if(ticket.isPresent()){
@@ -85,7 +85,7 @@ public class TicketController {
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<ApiWrapper<?>> assignTicketController(@RequestHeader("Authorization")String authHeader ,@PathVariable("ticketId")Long ticketId ,@RequestBody Map<String, Object> request){
 
-      String jwt=authHeader.replace("Bearer","");
+      String jwt=authHeader.replace("Bearer ","");
       String userId=jwtUtils.extractUserId(jwt);
       Users getOrgId=userRepo.findById(Long.valueOf(userId)).orElseThrow(()->new IllegalArgumentException("No such Users"));
       Long orgId=getOrgId.getOrganization().getId();
@@ -101,7 +101,7 @@ public class TicketController {
     @GetMapping("/getdevelopers")
     public ResponseEntity<ApiWrapper<?>> getDeveloperController(@RequestHeader("Authorization") String authHeader,@RequestParam("role") String role){
 
-        String jwt=authHeader.replace("Bearer","");
+        String jwt=authHeader.replace("Bearer ","");
         String userId=jwtUtils.extractUserId(jwt);
         Users getOrgId=userRepo.findById(Long.valueOf(userId)).orElseThrow(()->new UsernameNotFoundException("No such users"));
         Long orgId=getOrgId.getOrganization().getId();
@@ -121,7 +121,7 @@ public class TicketController {
     @GetMapping("/overdues")
     public ResponseEntity<ApiWrapper<?>> getOverDuesController(@RequestHeader("Authorization") String authHeader){
      
-        String jwt=authHeader.replace("Bearer","");
+        String jwt=authHeader.replace("Bearer ","");
         Long orgId=jwtUtils.extractOrganizationId(jwt);
 
         List<TicketResponseDTO> response=ticketService.getOverDuesController(orgId);

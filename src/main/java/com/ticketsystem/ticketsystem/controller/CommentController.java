@@ -13,6 +13,7 @@ import com.ticketsystem.ticketsystem.dto.ApiWrapper;
 import com.ticketsystem.ticketsystem.entity.Comments;
 import com.ticketsystem.ticketsystem.service.CommentService;
 import com.ticketsystem.ticketsystem.utils.JwtUtils;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/ticket")
@@ -28,9 +29,9 @@ public class CommentController {
 
 
     @PostMapping("/{ticketId}/comment")
-    public ResponseEntity<ApiWrapper<?>> addCommentController(@RequestHeader("Authorization") String authHeader, @PathVariable("ticketId") Long ticketId,@RequestBody Comments comment){
+    public ResponseEntity<ApiWrapper<?>> addCommentController(@RequestHeader("Authorization") String authHeader, @PathVariable("ticketId") Long ticketId,@Valid @RequestBody Comments comment){
         
-        String jwt=authHeader.replace("Bearer","");
+        String jwt=authHeader.replace("Bearer ","");
         String userId=jwtUtils.extractUserId(jwt);
         String response=commentService.addCommentService(ticketId,Long.valueOf(userId),comment);
         

@@ -9,6 +9,7 @@ import com.ticketsystem.ticketsystem.enums.TicketStatus;
 
 import io.micrometer.common.lang.Nullable;
 import jakarta.persistence.Column;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,11 +37,15 @@ public class Ticket {
     private Organization organization;
 
     @Column(nullable=false)
+    @NotBlank(message = "Title is required")
     private String title;
 
+    @Column(nullable=false)
+    @NotBlank(message = "Description is required")
     private String description;
 
     @Column(nullable=false)
+    @NotBlank(message = "Status is required")
     private String status; // OPEN, ASSIGNED, RESOLVED
     
     @Enumerated(EnumType.STRING)
